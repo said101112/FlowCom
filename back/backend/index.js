@@ -9,7 +9,7 @@ import http from 'http'
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import user from './models/user.js';
-
+import { generateSuggestions } from './Utils/AI.js';
 dotenv.config();
 
 const server = http.createServer(app);
@@ -43,7 +43,8 @@ export const io = new Server(server,{
 });
 
 // Store online users 
-
+const MAX_LAST_MESSAGES = 8; 
+export const Msg ={};
 export const onlineUser = {} ;
 io.on("connection",(socket)=>{
   /* const userId = socket.handshake.query.userId ; */
@@ -58,9 +59,38 @@ io.on("connection",(socket)=>{
   console.log( 'Users Online : ',onlineUser );
 
   io.emit("getOnlineUsers",Object.keys(onlineUser));
-  socket.on('sendMessage',(msg)=>{
+  socket.on('sendMessage', async({Room,message})=>{
      
-     console.log('new msg sender',msg.message);
+     console.log('new msg sender',message);
+     console.log('room of user :' , Room);
+     if(!Msg[Room]) Msg[Room]=[];
+     Msg[Room].push({
+      id:message.senderId,
+      text:message.text
+
+     })
+
+     if(Msg[Room].length>MAX_LAST_MESSAGES){
+      Msg[Room]=Msg[Room].slice(-MAX_LAST_MESSAGES);
+     }
+
+     const lastm= Msg[Room].map((m)=>({
+      user:m.id,
+      text:m.text
+     })
+     )
+      const s = await generateSuggestions(message.text,lastm);
+
+
+      console.log("sssesgestion : ",s);
+      const dest = onlineUser[message.receverId];
+      if(dest){
+        io.to(dest).emit('ai_segg',{
+          s
+        })
+      }
+   
+
   })
     socket.on('joinRoom',(r)=>{
     socket.join(r);

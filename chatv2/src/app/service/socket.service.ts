@@ -62,6 +62,12 @@ onNewMessage(callback: (data: { msg: any, senderUsername: string }) => void) {
     console.log('📤 Envoi du message:', message);
     this.socket.emit('sendMessage', {Room,message});
   }
+ onAiSegg(callback?: (s: string[]) => void) {
+  this.socket.on('ai_segg', (data) => {
+    console.log('Suggestions reçues:', data.s);
+    if (callback) callback(data.s);
+  });
+}
 
   Addf(Id:any,Code:any){
     console.log('amis a ajouter avec code ',Code);

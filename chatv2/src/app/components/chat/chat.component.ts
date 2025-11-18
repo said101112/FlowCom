@@ -28,6 +28,7 @@ export class ChatComponent implements OnInit, OnDestroy,AfterViewChecked {
   editingField = '';
   editValue = '';
   Room:any="";
+  aiSuggestions:any=[];
   userId!: string;
   inputMessage: string = '';
   countInseenMsg: any = {};
@@ -184,7 +185,7 @@ receiveUser(data: any) {
 
     // Chargement des amis
     this.loadAmis();
-this.socketService.onFriendAdded( (data:any)=>{
+    this.socketService.onFriendAdded( (data:any)=>{
        this.showToast("✅ Nouvel ami ajouté !");
        console.log(data);
        this.loadAmis(); // refresh la liste amis
@@ -208,7 +209,18 @@ this.socketService.onFriendAdded( (data:any)=>{
     // ✅ Affiche un toast avec le nom d'utilisateur
     this.showToast(`💬 Nouveau message de ${senderUsername}: ${msg.text}`);
   }
-
+    this.socketService.onAiSegg((s) => {
+  this.aiSuggestions = s;
+  if(!this.selectedConversation)return;
+     const suggestions = s.map((text) => ({
+    id: 'ai_suggestion_' + Math.random(), // id unique
+    text,
+    senderId: 'ai', // pour identifier comme AI
+    isSuggestion: true, // flag pour template
+  }));
+  this.selectedConversation.conversation.push(...suggestions);
+  
+});
   // 🔄 Met à jour la liste des amis (badges, derniers messages…)
   this.loadAmis();
 });
@@ -292,6 +304,7 @@ this.socketService.onFriendAdded( (data:any)=>{
 
     // Envoi via socket
     this.socketService.sendMessage(this.Room,message);
+    console.log("Segggggggggggggg ; ",this.aiSuggestions);
 
     // Vider le champ
     this.inputMessage = '';
