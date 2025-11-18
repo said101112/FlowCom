@@ -101,7 +101,7 @@ export const Signin = async (req, res) => {
     const validPassword = await bcrypt.compare(password, existingUser.password);
     if (!validPassword) return res.status(400).json({ msg: "Mot de passe incorrect." });
 
-    const token = jwt.sign({ id: existingUser._id , username:existingUser.username }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: existingUser._id , username: existingUser.username }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
     res.cookie('auth_token', token, {
       httpOnly: true,
