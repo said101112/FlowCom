@@ -1,0 +1,57 @@
+# FlowCom - stack de développement local
+#
+#   docker compose up --build
+#   docker compose run --rm backend npm run seed:admin
+#
+# L'interface est sur http://localhost:4200, l'API sur http://localhost:3000.
+
+name: flowcom
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      # URLs d'API et de socket vues par le navigateur.
+      API_URL: http://localhost:3000/auth
+      SOCKET_URL: http://localhost:3000
+    ports:
+      - "4200:4000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MONGO_URL: mongodb://db:27017/flowcom
+      CLIENT_ORIGIN: http://localhost:4200
+      APP_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

@@ -1,0 +1,17 @@
+# Normalisation des fins de ligne : le depot cible Linux (Docker/Kubernetes),
+# on stocke donc LF et on lit CRLF sur les machines Windows.
+* text=auto eol=lf
+
+# Fichiers binaires
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+
+# Scripts shell executables
+*.sh text eol=lf

@@ -1,0 +1,84 @@
+# MongoDB pour un cluster de développement.
+#
+# En production, remplacer par un StatefulSet avec volume persistant et une
+# règle de sauvegarde, ou par un service managé (Atlas).
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  labels:
+    app: flowcom
+    component: mongo
+spec:
+  type: ClusterIP
+  selector:
+    app: flowcom
+    component: mongo
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: mongodb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  labels:
+    app: flowcom
+    component: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flowcom
+      component: mongo
+  template:
+    metadata:
+      labels:
+        app: flowcom
+        component: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - db.adminCommand('ping')
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - db.adminCommand('ping')
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

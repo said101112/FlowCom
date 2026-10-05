@@ -1,0 +1,51 @@
+# Ingress unique : le frontend et l'API partagent le même hôte.
+#
+#   /auth   -> flowcom-backend:3000
+#   /socket -> flowcom-backend:3000   (upgrade WebSocket)
+#   /       -> flowcom-frontend:4000
+#
+# Adapter `host` à votre domaine. Sur un cluster local sans contrôleur
+# d'ingress, retirer ce fichier et utiliser `kubectl port-forward`.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flowcom
+  labels:
+    app: flowcom
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: flowcom.local
+      http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: flowcom-backend
+                port:
+                  name: http
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: flowcom-backend
+                port:
+                  name: http
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: flowcom-backend
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flowcom-frontend
+                port:
+                  name: http
